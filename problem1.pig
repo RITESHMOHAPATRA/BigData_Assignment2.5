@@ -1,0 +1,12 @@
+REGISTER '/home/acadgild/install/pig/pig-0.16.0/lib/piggybank.jar';
+delayed_flight = load 'DelayedFlights.csv' USING org.apache.pig.piggybank.storage.CSVExcelStorage(',','NO_MULTILINE','UNIX','SKIP_INPUT_HEADER');
+required_data = foreach delayed_flight generate (int)$1 as year, (int)$10 as flight_num, (chararray)$17 as origin,(chararray) $18 as dest;
+filter_dest = filter required_data by dest is not null;
+group_dest = group filter_dest by dest;
+visit_dest = foreach group_dest generate group, COUNT(filter_dest.dest);
+desc_visit_dest = order visit_dest by $1 DESC;
+Result = LIMIT desc_visit_dest 5;
+airport_data = load 'airports.csv' USING org.apache.pig.piggybank.storage.CSVExcelStorage(',','NO_MULTILINE','UNIX','SKIP_INPUT_HEADER');
+airport = foreach airport_data generate (chararray)$0 as dest, (chararray)$2 as city, (chararray)$4 as country;
+complete_details = join Result by $0, airport by dest;
+dump complete_details;
